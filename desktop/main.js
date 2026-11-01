@@ -4,11 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
+// Keep the same origin on every launch so Supabase's localStorage session persists.
+const APP_PORT = 47831;
 const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.webmanifest':'application/manifest+json; charset=utf-8', '.svg':'image/svg+xml' };
 let server;
 
 function serve() {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     server = http.createServer((req, res) => {
       let name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).replace(/^\/+/, '') || 'index.html';
       const file = path.resolve(root, name);
@@ -18,7 +20,9 @@ function serve() {
         res.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'X-Content-Type-Options':'nosniff' });
         res.end(data);
       });
-    }).listen(0, '127.0.0.1', () => resolve(server.address().port));
+    });
+    server.once('error', reject);
+    server.listen(APP_PORT, '127.0.0.1', () => resolve(APP_PORT));
   });
 }
 
@@ -46,7 +50,14 @@ function setupPermissions() {
 }
 
 async function createWindow() {
-  const port = await serve();
+  let port;
+  try {
+    port = await serve();
+  } catch (error) {
+    console.error('Falha ao iniciar servidor local:', error);
+    dialog.showErrorBox('MetralhaHub não iniciou', `A porta local ${APP_PORT} está ocupada. Feche outra instância do MetralhaHub e tente novamente.`);
+    throw error;
+  }
   const win = new BrowserWindow({
     width: 1440, height: 900, minWidth: 760, minHeight: 600,
     backgroundColor: '#111219',
@@ -57,8 +68,19 @@ async function createWindow() {
   win.loadURL(`http://127.0.0.1:${port}/`);
 }
 
-app.whenReady().then(createWindow);
-app.whenReady().then(setupPermissions);
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+  });
+  app.whenReady().then(async () => {
+    setupPermissions();
+    try { await createWindow(); } catch { app.quit(); }
+  });
+}
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('before-quit', () => { if (server) server.close(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
