@@ -64,6 +64,8 @@ async function createWindow() {
     title: 'MetralhaHub',
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
   });
+  win.webContents.setZoomFactor(1.12);
+  win.maximize();
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.loadURL(`http://127.0.0.1:${port}/`);
 }

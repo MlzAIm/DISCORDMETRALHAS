@@ -13,6 +13,7 @@
   let localMedia = null;
   let screenMedia = null;
   let peers = new Map();
+  let outputMuted = false;
   let heartbeatTimer = null;
   let messagesChannel = null;
   let renderedMessageIds = new Set();
@@ -119,13 +120,18 @@
     let tile = document.getElementById(`remote-${peerId}`);
     if (!tile) {
       tile = document.createElement('div'); tile.className = 'remote-tile'; tile.id = `remote-${peerId}`;
-      tile.innerHTML = `<video autoplay playsinline></video><audio autoplay></audio><span>${safe(name)}</span>`;
+      tile.innerHTML = `<video autoplay playsinline></video><audio autoplay></audio><span>${safe(name)}</span><button class="fullscreen-screen" type="button" title="Tela cheia" aria-label="Ver compartilhamento em tela cheia">Tela cheia</button>`;
       host.append(tile);
     }
-    tile.querySelector('video').srcObject = stream;
-    tile.querySelector('video').muted = true;
-    tile.querySelector('audio').srcObject = stream;
-    tile.querySelector('video').classList.toggle('audio-only', !stream.getVideoTracks().some(track=>track.readyState==='live'));
+    const hasVideo = stream.getVideoTracks().some(track=>track.readyState==='live');
+    const video = tile.querySelector('video');
+    const audio = tile.querySelector('audio');
+    video.srcObject = stream;
+    video.muted = true;
+    video.classList.toggle('audio-only', !hasVideo);
+    tile.classList.toggle('sharing', hasVideo);
+    audio.srcObject = stream;
+    audio.muted = outputMuted;
     updateMemberCount();
   }
 
@@ -149,8 +155,40 @@
     localMedia.getAudioTracks().forEach(track=>track.enabled=!enabled);
     $('#muteMic').classList.toggle('muted', enabled);
     $('#muteMic').title = enabled ? 'Ativar microfone' : 'Silenciar microfone';
+    $('#muteMic').setAttribute('aria-pressed', String(enabled));
+    $('#muteMicLabel').textContent = enabled ? 'Microfone mutado' : 'Mutar microfone';
     $('#callStatus').textContent = enabled ? 'Microfone silenciado · P2P' : 'Microfone ativo · P2P';
   };
+
+  cloud.toggleOutput = () => {
+    outputMuted = !outputMuted;
+    document.querySelectorAll('.remote-tile audio').forEach(audio => { audio.muted = outputMuted; });
+    const button = $('#muteOutput');
+    button.classList.toggle('muted', outputMuted);
+    button.title = outputMuted ? 'Ativar áudio recebido' : 'Silenciar áudio recebido';
+    button.setAttribute('aria-pressed', String(outputMuted));
+    $('#muteOutputLabel').textContent = outputMuted ? 'Áudio silenciado' : 'Silenciar áudio';
+  };
+
+  $('#remoteMedia')?.addEventListener('click', async event => {
+    const button = event.target.closest('.fullscreen-screen');
+    if (!button) return;
+    const tile = button.closest('.remote-tile');
+    try {
+      if (document.fullscreenElement === tile) await document.exitFullscreen();
+      else await tile.requestFullscreen();
+    } catch (error) {
+      console.warn('Não foi possível abrir a tela cheia:', error);
+      announce('Não foi possível abrir a tela cheia.');
+    }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    document.querySelectorAll('.fullscreen-screen').forEach(button => {
+      const active = document.fullscreenElement === button.closest('.remote-tile');
+      button.textContent = active ? 'Sair da tela cheia' : 'Tela cheia';
+      button.title = active ? 'Sair da tela cheia' : 'Tela cheia';
+    });
+  });
 
   async function onSignal({ payload }) {
     if (!current || !payload || payload.to !== current.id || payload.from === current.id) return;
@@ -270,7 +308,7 @@
     event.preventDefault(); event.stopImmediatePropagation(); const input=$('#messageInput'); const text=input.value.trim(); if(text)cloud.sendMessage(text); input.value='';
   }, true);
   capture('#joinCall', cloud.joinCall); capture('#voiceJoin', cloud.joinCall); capture('#leaveCall', cloud.leaveCall);
-  capture('#shareScreen', cloud.shareScreen); capture('#bannerScreen', cloud.shareScreen); capture('#stopScreen', cloud.stopScreen); capture('#muteMic', cloud.toggleMute);
+  capture('#shareScreen', cloud.shareScreen); capture('#bannerScreen', cloud.shareScreen); capture('#stopScreen', cloud.stopScreen); capture('#muteMic', cloud.toggleMute); capture('#muteOutput', cloud.toggleOutput);
   $('#settingsButton')?.addEventListener('click', event => {
     if (!cloud.enabled || !current) return;
     event.preventDefault(); event.stopImmediatePropagation(); client.auth.signOut().then(()=>{ cloud.leaveCall(); current=null; user=null; localStorage.removeItem('mh_user'); location.reload(); });
