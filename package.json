@@ -1,6 +1,6 @@
 {
   "name": "metralhahub",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "private": true,
   "description": "App de conversa e chamadas do MetralhaHub",
   "main": "desktop/main.js",

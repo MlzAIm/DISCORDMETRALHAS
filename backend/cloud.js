@@ -13,6 +13,7 @@
   let localMedia = null;
   let screenMedia = null;
   let peers = new Map();
+  let outputMuted = false;
   let heartbeatTimer = null;
   let messagesChannel = null;
   let renderedMessageIds = new Set();
@@ -119,13 +120,18 @@
     let tile = document.getElementById(`remote-${peerId}`);
     if (!tile) {
       tile = document.createElement('div'); tile.className = 'remote-tile'; tile.id = `remote-${peerId}`;
-      tile.innerHTML = `<video autoplay playsinline></video><audio autoplay></audio><span>${safe(name)}</span>`;
+      tile.innerHTML = `<video autoplay playsinline></video><audio autoplay></audio><span>${safe(name)}</span><button class="fullscreen-screen" type="button" title="Tela cheia" aria-label="Ver compartilhamento em tela cheia">Tela cheia</button>`;
       host.append(tile);
     }
-    tile.querySelector('video').srcObject = stream;
-    tile.querySelector('video').muted = true;
-    tile.querySelector('audio').srcObject = stream;
-    tile.querySelector('video').classList.toggle('audio-only', !stream.getVideoTracks().some(track=>track.readyState==='live'));
+    const hasVideo = stream.getVideoTracks().some(track=>track.readyState==='live');
+    const video = tile.querySelector('video');
+    const audio = tile.querySelector('audio');
+    video.srcObject = stream;
+    video.muted = true;
+    video.classList.toggle('audio-only', !hasVideo);
+    tile.classList.toggle('sharing', hasVideo);
+    audio.srcObject = stream;
+    audio.muted = outputMuted;
     updateMemberCount();
   }
 
@@ -135,6 +141,31 @@
     document.getElementById(`remote-${peerId}`)?.remove();
     document.getElementById(`voice-member-${peerId}`)?.remove();
     updateMemberCount();
+  }
+
+  async function toggleScreenFullscreen(button) {
+    const tile = button.closest('.remote-tile');
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+      // Keep the action button inside the fullscreen element so Escape/button both work.
+      if (tile?.requestFullscreen) await tile.requestFullscreen({ navigationUI:'hide' });
+      else throw new Error('Fullscreen API indisponível');
+    } catch (error) {
+      console.warn('Fullscreen da transmissão falhou:', error);
+      announce('Não foi possível abrir a tela cheia. Tente novamente pelo botão da transmissão.');
+    }
+  }
+
+  function tuneScreenSender(sender) {
+    const parameters = sender.getParameters();
+    if (!parameters.encodings?.length) parameters.encodings = [{}];
+    parameters.degradationPreference = 'maintain-framerate';
+    parameters.encodings[0].maxBitrate = 4_000_000;
+    parameters.encodings[0].maxFramerate = 30;
+    sender.setParameters(parameters).catch(error => console.warn('Ajuste do vídeo compartilhado:', error));
   }
 
   function updateMemberCount() {
@@ -149,8 +180,39 @@
     localMedia.getAudioTracks().forEach(track=>track.enabled=!enabled);
     $('#muteMic').classList.toggle('muted', enabled);
     $('#muteMic').title = enabled ? 'Ativar microfone' : 'Silenciar microfone';
+    $('#muteMic').setAttribute('aria-pressed', String(enabled));
+    $('#muteMicLabel').textContent = enabled ? 'Microfone mutado' : 'Mutar microfone';
     $('#callStatus').textContent = enabled ? 'Microfone silenciado · P2P' : 'Microfone ativo · P2P';
   };
+
+  cloud.toggleOutput = () => {
+    outputMuted = !outputMuted;
+    document.querySelectorAll('.remote-tile audio').forEach(audio => { audio.muted = outputMuted; });
+    const button = $('#muteOutput');
+    button.classList.toggle('muted', outputMuted);
+    button.title = outputMuted ? 'Ativar áudio recebido' : 'Silenciar áudio recebido';
+    button.setAttribute('aria-pressed', String(outputMuted));
+    $('#muteOutputLabel').textContent = outputMuted ? 'Áudio silenciado' : 'Silenciar áudio';
+  };
+
+  $('#remoteMedia')?.addEventListener('click', async event => {
+    const button = event.target.closest('.fullscreen-screen');
+    if (!button) return;
+    const tile = button.closest('.remote-tile');
+    try {
+      await toggleScreenFullscreen(button);
+    } catch (error) {
+      console.warn('Não foi possível abrir a tela cheia:', error);
+      announce('Não foi possível abrir a tela cheia.');
+    }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    document.querySelectorAll('.fullscreen-screen').forEach(button => {
+      const active = document.fullscreenElement === button.closest('.remote-tile');
+      button.textContent = active ? 'Sair da tela cheia' : '⛶ Tela cheia';
+      button.title = active ? 'Sair da tela cheia' : 'Tela cheia';
+    });
+  });
 
   async function onSignal({ payload }) {
     if (!current || !payload || payload.to !== current.id || payload.from === current.id) return;
@@ -232,9 +294,9 @@
     if (!room) await cloud.joinCall();
     if (!room) return;
     try {
-      screenMedia = await navigator.mediaDevices.getDisplayMedia({ video:{ frameRate:{ ideal:15, max:15 }, width:{ max:1280 }, height:{ max:720 } }, audio:false });
+      screenMedia = await navigator.mediaDevices.getDisplayMedia({ video:{ frameRate:{ ideal:30, max:30 }, width:{ ideal:1920, max:1920 }, height:{ ideal:1080, max:1080 } }, audio:false });
       $('#screenVideo').srcObject = screenMedia; $('#screenPreview').classList.remove('hidden');
-      for (const { pc } of peers.values()) screenMedia.getVideoTracks().forEach(track=>pc.addTrack(track,screenMedia));
+      for (const { pc } of peers.values()) screenMedia.getVideoTracks().forEach(track=>tuneScreenSender(pc.addTrack(track,screenMedia)));
       $('#callStatus').textContent='Compartilhando sua tela com a call';
       screenMedia.getVideoTracks()[0].addEventListener('ended', cloud.stopScreen, { once:true });
     } catch (error) { if (error.name !== 'NotAllowedError') announce('Não foi possível compartilhar a tela.'); }
@@ -270,7 +332,7 @@
     event.preventDefault(); event.stopImmediatePropagation(); const input=$('#messageInput'); const text=input.value.trim(); if(text)cloud.sendMessage(text); input.value='';
   }, true);
   capture('#joinCall', cloud.joinCall); capture('#voiceJoin', cloud.joinCall); capture('#leaveCall', cloud.leaveCall);
-  capture('#shareScreen', cloud.shareScreen); capture('#bannerScreen', cloud.shareScreen); capture('#stopScreen', cloud.stopScreen); capture('#muteMic', cloud.toggleMute);
+  capture('#shareScreen', cloud.shareScreen); capture('#bannerScreen', cloud.shareScreen); capture('#stopScreen', cloud.stopScreen); capture('#muteMic', cloud.toggleMute); capture('#muteOutput', cloud.toggleOutput);
   $('#settingsButton')?.addEventListener('click', event => {
     if (!cloud.enabled || !current) return;
     event.preventDefault(); event.stopImmediatePropagation(); client.auth.signOut().then(()=>{ cloud.leaveCall(); current=null; user=null; localStorage.removeItem('mh_user'); location.reload(); });

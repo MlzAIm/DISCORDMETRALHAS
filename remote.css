@@ -1,9 +1,31 @@
-.remote-grid{display:flex;gap:8px;overflow-x:auto;padding:0 25px 10px;max-width:950px;width:100%;margin:0 auto}
-.remote-tile{position:relative;width:min(240px,45%);min-width:125px;aspect-ratio:16/10;border-radius:10px;overflow:hidden;background:#090a0e;border:1px solid #ffffff16}
-.remote-tile video{width:100%;height:100%;object-fit:contain}
+.remote-grid{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;overflow:auto;padding:0 25px 12px;max-width:none;width:100%;max-height:min(52vh,620px);margin:0 auto}
+.remote-tile{position:relative;flex:0 1 230px;width:min(230px,45%);min-width:150px;aspect-ratio:16/10;border-radius:11px;overflow:hidden;background:#090a0e;border:1px solid #ffffff20}
+.remote-tile video{display:block;width:100%;height:100%;object-fit:contain;background:#050608}
 .remote-tile video.audio-only{display:none}
 .remote-tile audio{display:none}
-.remote-tile span{position:absolute;left:7px;bottom:7px;border-radius:5px;background:#0009;padding:4px 7px;color:#fff;font-size:9px}
-.call-banner-actions .muted{color:#ff8290!important;background:#ff82901a}
-.remote-member{height:28px;display:flex;align-items:center;gap:7px;padding-left:28px;color:#aaa;font-size:10px}
-@media(max-width:720px){.remote-grid{padding:0 12px 8px}}
+.remote-tile span{position:absolute;left:8px;bottom:8px;border-radius:6px;background:#000b;padding:5px 8px;color:#fff;font-size:12px;z-index:1}
+.remote-tile.sharing{flex:1 1 100%;width:100%;max-width:1100px;min-width:0;aspect-ratio:16/9;max-height:52vh}
+.remote-tile:not(.sharing){flex:0 0 auto;width:auto;min-width:0;height:38px;aspect-ratio:auto}
+.remote-tile:not(.sharing) video{display:none}
+.remote-tile:not(.sharing) span{left:0;bottom:0}
+.fullscreen-screen{position:absolute;top:12px;right:12px;z-index:2;padding:9px 13px;border:1px solid #ffffff35;border-radius:9px;background:#151720eF;color:#fff;font-size:13px;font-weight:700;opacity:1;transition:opacity .15s}
+.remote-tile:not(.sharing) .fullscreen-screen{display:none}
+.fullscreen-screen:hover{background:#c2f36b;color:#17200b}
+.remote-tile:fullscreen{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;width:100vw;max-width:none;height:100vh;max-height:none;aspect-ratio:auto;border:0;border-radius:0;background:#000}
+.remote-tile:fullscreen video{width:100vw;height:100vh;max-height:100vh;object-fit:contain}
+.remote-tile:fullscreen .fullscreen-screen{opacity:1}
+.remote-tile:fullscreen span{left:18px;bottom:18px;padding:8px 12px;font-size:14px}
+.call-banner{width:calc(100% - 50px);height:auto;min-height:64px;padding:9px 12px;gap:12px}
+.call-banner-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.call-control{min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;border:1px solid #ffffff19;border-radius:9px;background:#2b2d35;color:#e7e8ec;font-size:12px;font-weight:700;white-space:nowrap}
+.call-control:hover{border-color:#c2f36b80;background:#33362e}
+.call-control-icon{padding:4px 5px;border-radius:5px;background:#c2f36b1a;color:#c2f36b;font-size:9px;font-weight:800;letter-spacing:.4px}
+.call-control.muted{border-color:#ff829055;background:#ff82901a;color:#ffdfe2}
+.call-control.muted .call-control-icon{background:#ff82901c;color:#ff9aa3}
+.call-banner-actions .leave-call{height:38px;padding:0 13px;border-radius:9px;font-size:12px;white-space:nowrap}
+.screen-preview{right:310px;top:82px;width:min(760px,calc(100vw - 350px));padding:10px}
+.screen-preview video{max-height:min(58vh,680px)}
+.preview-top{font-size:11px}
+.preview-top button{font-size:12px}
+@media(max-width:1100px){.screen-preview{right:16px;width:min(760px,calc(100vw - 40px))}}
+@media(max-width:720px){.remote-grid{padding:0 12px 10px;max-height:45vh}.remote-tile.sharing{max-height:42vh}.call-banner{width:calc(100% - 24px);height:auto;flex-wrap:wrap;gap:8px;padding:10px}.call-live{font-size:7px;padding-right:8px}.call-info{flex:1 1 100%}.call-banner-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:7px}.call-control{width:100%;min-height:42px;padding:0 7px;font-size:11px}.call-control-icon{font-size:8px}.call-banner-actions .leave-call{height:42px;font-size:11px}.screen-preview{right:8px;top:64px;width:calc(100vw - 72px)}.screen-preview video{max-height:44vh}.fullscreen-screen{opacity:1;top:8px;right:8px;padding:8px 10px;font-size:12px}}
