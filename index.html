@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111219" />
+  <meta name="description" content="MetralhaHub — seu canto para conversar e compartilhar com a galera." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>MetralhaHub — seu grupo, sua call</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="remote.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/config.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="rail">
+      <button class="brand-mark" title="MetralhaHub">M<span>.</span></button>
+      <div class="rail-rule"></div>
+      <button class="server-badge active" title="Metralha Squad"><span>🎮</span><i></i></button>
+      <button class="add-server" title="Criar espaço">＋</button>
+      <div class="rail-bottom"><button class="icon-button" title="Ajuda">?</button></div>
+    </aside>
+
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <div class="brand-lockup"><span class="brand-name">metralha<span>hub</span></span><span class="online-dot"></span></div>
+        <button class="icon-button" id="serverMenu" title="Opções">···</button>
+      </header>
+      <div class="server-title"><div class="server-avatar">🎮</div><div><strong>Metralha Squad</strong><small>nosso cantinho</small></div><button class="icon-button more" title="Opções do grupo">⌄</button></div>
+      <div class="sidebar-scroll">
+        <div class="section-heading"><span>CANAIS DE TEXTO</span><button class="tiny-plus" title="Adicionar canal">＋</button></div>
+        <button class="channel selected" data-channel="geral"><span class="hash">#</span><span>geral</span><span class="channel-dot"></span></button>
+        <button class="channel" data-channel="memes"><span class="hash">#</span><span>memes</span></button>
+        <button class="channel" data-channel="jogos"><span class="hash">#</span><span>jogos</span></button>
+        <div class="section-heading voice-heading"><span>CANAIS DE VOZ</span><button class="tiny-plus" title="Adicionar canal">＋</button></div>
+        <button class="channel voice-channel selected-voice" id="voiceJoin"><span class="voice-icon">◖</span><span>Resenha</span><span class="live-pill">● AO VIVO</span></button>
+        <div class="voice-members" id="voiceMembers"><div class="mini-avatar av-blue">M</div><span id="voiceUserName">Você</span><span class="voice-wave">▂▅▃</span></div>
+        <div class="section-heading members-heading"><span>NA ÁREA — <span id="memberCount">1</span></span><button class="tiny-plus" title="Convidar amigos">＋</button></div>
+        <div class="member-row"><div class="mini-avatar av-blue">M<span class="presence"></span></div><span id="memberName">Você</span><span class="you-tag">VOCÊ</span></div>
+        <div class="empty-friends"><div class="empty-graphic">✳</div><strong>Seu squad começa aqui</strong><p>Convide os amigos e deixe a resenha rolar.</p><button class="invite-button" id="inviteButton">＋ &nbsp; Convidar amigos</button></div>
+      </div>
+      <footer class="user-panel"><div class="mini-avatar av-blue" id="profileAvatar">M<span class="presence"></span></div><div class="user-meta"><strong id="profileName">Visitante</strong><small><span class="online-dot"></span> online</small></div><button class="icon-button" id="settingsButton" title="Perfil">⚙</button><button class="icon-button" id="signInButton" title="Entrar ou criar conta">↗</button></footer>
+    </aside>
+
+    <section class="main-area">
+      <header class="topbar"><div class="channel-title"><span class="hash">#</span><strong id="channelTitle">geral</strong><span class="top-divider"></span><span class="channel-subtitle" id="channelSubtitle">o ponto de encontro da galera</span></div><div class="top-actions"><button class="icon-button" title="Notificações">♧</button><button class="icon-button" title="Fixados">⌑</button><button class="icon-button" title="Membros">♙</button><span class="top-divider"></span><button class="icon-button search-icon" id="searchToggle" title="Buscar">⌕</button><label class="search-box hidden" id="searchBox"><span>⌕</span><input id="searchInput" placeholder="Buscar mensagens" /></label><div class="top-avatar av-blue" id="topAvatar">M</div></div></header>
+
+      <div class="chat-scroll" id="chatScroll"><div class="chat-content" id="chatContent">
+        <div class="channel-welcome"><div class="welcome-hash">#</div><h1>Bem-vindo ao <span id="welcomeChannel">geral</span>!</h1><p>A resenha começa aqui. Manda um salve pra galera 👋</p><span class="welcome-date">HOJE</span></div>
+        <div class="messages" id="messages"></div>
+      </div></div>
+      <div class="remote-grid" id="remoteMedia"></div>
+
+      <div class="call-banner" id="callBanner"><div class="call-live"><span></span> SALA DE VOZ</div><div class="call-info"><div class="call-icon">◖</div><div><strong>Você está em Resenha</strong><small id="callStatus">Conectando ao grupo…</small></div></div><div class="call-banner-actions"><button class="icon-button" id="muteMic" title="Silenciar microfone">♩</button><button class="icon-button" id="bannerScreen" title="Compartilhar tela">▣</button><button class="leave-call" id="leaveCall">Sair da call</button></div></div>
+      <div class="composer-wrap"><div class="reply-preview hidden" id="replyPreview">Respondendo a <strong id="replyTo"></strong><button id="cancelReply">×</button></div><form class="composer" id="messageForm"><button type="button" class="composer-add" id="attachButton" title="Anexar">＋</button><input id="messageInput" autocomplete="off" placeholder="Conversar em #geral" maxlength="2000" /><button type="button" class="composer-emoji" id="emojiButton" title="Emoji">☺</button><button class="send-button" title="Enviar mensagem">➤</button></form><div class="composer-hint">Seja gente boa, compartilhe a resenha <span>♡</span></div></div>
+    </section>
+
+    <aside class="right-panel"><div class="right-header"><span>ATIVIDADE</span><button class="icon-button" title="Mais">···</button></div><section class="activity-card"><div class="activity-label"><span class="pulse-dot"></span> AGORA NA CALL</div><div class="activity-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="activity-controller">🎧</div><span class="spark spark-one">✦</span><span class="spark spark-two">✧</span></div><h3>O canal Resenha está aberto</h3><p>Chega junto pra trocar ideia, jogar conversa fora ou compartilhar a tela.</p><div class="call-count"><div class="stacked-avatars"><span class="av-blue">M</span><span class="av-purple">+</span></div><span id="callPeople">1 pessoa por aqui</span></div><button class="join-button" id="joinCall">Entrar na call <span>→</span></button><div class="activity-divider"></div><div class="share-tip"><div class="tip-icon">▣</div><div><strong>Mostre o que está rolando</strong><span>Compartilhe sua tela dentro da call.</span></div></div><button class="share-button" id="shareScreen">Compartilhar tela</button></section><section class="quick-card"><div class="quick-icon">✦</div><div><strong>Chama o bonde</strong><p>Copie o convite e traga seus amigos.</p><button id="copyInvite">Copiar convite <span>↗</span></button></div></section><div class="footer-note">feito pra resenha <span>♥</span></div></aside>
+    <div class="screen-preview hidden" id="screenPreview"><div class="preview-top"><span><i></i> SUA TELA ESTÁ SENDO COMPARTILHADA</span><button id="stopScreen">Parar de compartilhar ×</button></div><video id="screenVideo" autoplay playsinline muted></video></div>
+  </main>
+
+  <div class="modal-backdrop hidden" id="authModal"><section class="auth-modal"><button class="modal-close" data-close="authModal">×</button><div class="modal-logo">M<span>.</span></div><div class="eyebrow">SEU GRUPO, SUA CALL</div><h2 id="authTitle">Chega mais.</h2><p id="authDescription">Crie sua conta rapidinho e vem pra resenha.</p><form id="authForm"><label>Como a galera te chama?<input id="authName" placeholder="Seu apelido" maxlength="24" required /></label><label id="inviteLabel">Código de convite<input id="inviteCode" placeholder="Peça o código ao dono do grupo" maxlength="48" required /></label><label>Seu e-mail<input id="authEmail" type="email" placeholder="voce@email.com" required /></label><label>Crie uma senha<input id="authPassword" type="password" placeholder="Pelo menos 6 caracteres" minlength="6" required /></label><div class="auth-error" id="authError"></div><button class="auth-submit">Criar minha conta <span>→</span></button></form><div class="auth-switch">Já tem conta? <button id="toggleAuth">Entrar</button></div><div class="local-note">Conta e conversas compartilhadas com o grupo</div></section></div>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+  <script src="/backend/cloud.js"></script>
+  <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));</script>
+</body>
+</html>
