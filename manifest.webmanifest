@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "MetralhaHub",
+  "short_name": "MetralhaHub",
+  "description": "Seu canto para conversar e compartilhar com a galera.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111219",
+  "theme_color": "#111219",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "metralhahub",
+  "version": "0.2.0",
+  "private": true,
+  "description": "App de conversa e chamadas do MetralhaHub",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "^45.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "br.metralhahub.desktop",
+    "productName": "MetralhaHub",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "index.html",
+      "styles.css",
+      "remote.css",
+      "app.js",
+      "config.js",
+      "icon.svg",
+      "backend/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "electron@45.2.1": true
+  }
+}
